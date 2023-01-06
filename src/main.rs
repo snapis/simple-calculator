@@ -1,4 +1,4 @@
-use eframe::{egui, IconData}; // Imports the egui crate into scope
+use eframe::{egui, IconData, Renderer}; // Imports the egui crate into scope
 
 fn main() {
     //let native_options = eframe::NativeOptions::default();
@@ -11,22 +11,23 @@ fn main() {
      });
     */
 
-    
     let native_options = eframe::NativeOptions {
         // This i understand
 
-        //icon_data: icon,
+        // icon_data: icon,
+        // renderer is by defualt Glow
         vsync: false,
-        run_and_return: false,
         ..Default::default()
     };
+
+    // type AppCreator = Box<dyn FnOnce(&CreationContext<'_>) -> Box<dyn App>>;
 
     eframe::run_native(
         "MyEguiApp",
         native_options,
         Box::new(|cc| Box::new(MyEguiApp::new(cc))),
+        // First is basically like a name less function (cc) is passed {box::new(MyEguiApp::new(cc))}
     );
-
 }
 
 #[derive(Default)]
@@ -49,3 +50,32 @@ impl eframe::App for MyEguiApp {
         });
     }
 }
+
+/*
+
+run_native(app_name: &str, native_options: NativeOptions, app_creator: AppCreator)
+
+native::run::run_glow(app_name, native_options, app_creator);
+
+
+GlowWinitApp::new(event_loop, app_name, native_options, app_creator);
+
+
+
+impl GlowWinitApp {
+        fn new(
+            event_loop: &EventLoop<UserEvent>,
+            app_name: &str,
+            native_options: epi::NativeOptions,
+            app_creator: epi::AppCreator,
+        ) -> Self {
+            Self {
+                repaint_proxy: Arc::new(egui::mutex::Mutex::new(event_loop.create_proxy())),
+                app_name: app_name.to_owned(),
+                native_options,
+                running: None,
+                app_creator: Some(app_creator),
+                is_focused: true,
+                frame_nr: 0,
+            }
+        } */
