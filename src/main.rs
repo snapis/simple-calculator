@@ -1,51 +1,89 @@
-use eframe::{egui, IconData}; // Imports the egui crate into scope
+
+use eframe::{egui::{self, RichText, Color32}, epaint::Rounding};
 
 fn main() {
-    //let native_options = eframe::NativeOptions::default();
-
-    /* If i were to add a icon
-    let icon = Some(IconData {
-        rgba: vec![40,48,42,255,100,48,42,255,40,48,42,255,100,48,42,255],
-        width: 2,
-        height: 2,
-     });
-    */
-
-    
-    let native_options = eframe::NativeOptions {
-        // This i understand
-
-        //icon_data: icon,
-        vsync: false,
-        run_and_return: false,
-        ..Default::default()
-    };
-
-    eframe::run_native(
-        "MyEguiApp",
-        native_options,
-        Box::new(|cc| Box::new(MyEguiApp::new(cc))),
-    );
-
+    let native_options = eframe::NativeOptions::default();
+    eframe::run_native("My egui App", native_options, Box::new(|_cc| Box::new(MyEguiApp {display_text: "test text".to_string()})));
 }
 
 #[derive(Default)]
-struct MyEguiApp {}
-
-impl MyEguiApp {
-    fn new(cc: &eframe::CreationContext<'_>) -> Self {
-        // Customize egui here with cc.egui_ctx.set_fonts and cc.egui_ctx.set_visuals.
-        // Restore app state using cc.storage (requires the "persistence" feature).
-        // Use the cc.gl (a glow::Context) to create graphics shaders and buffers that you can use
-        // for e.g. egui::PaintCallback.
-        Self::default()
-    }
+struct MyEguiApp {
+    display_text: String,
 }
 
 impl eframe::App for MyEguiApp {
-    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Hello, World!");
-        });
-    }
+   fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
+
+       egui::CentralPanel::default().show(ctx, |ui| {
+
+            let button_size_square = egui::Vec2 {
+                x: 100.0,
+                y: 100.0,
+            };
+
+            let button_size_rectangle = egui::Vec2 {
+                x: 200.0,
+                y: 100.0,
+            };
+
+            let operation_color = Color32::from_rgb(255, 190 , 30);
+
+            ui.spacing_mut().item_spacing = egui::vec2(0.1, 0.1);
+
+            ui.horizontal(|ui| {
+
+                ui.add(egui::TextEdit::singleline(&mut self.display_text).font(egui::FontId { size: 40.0, ..Default::default()}).interactive(false).desired_width(400.0).margin(egui::vec2(0.0, 0.0)));
+
+            });
+
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Button::new(RichText::new("C").color(Color32::BLACK).size(40.0)).min_size(button_size_rectangle));
+                ui.add(egui::Button::new(RichText::new("%").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("÷").color(Color32::BLACK).size(40.0)).min_size(button_size_square).fill(operation_color));
+            });
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Button::new(RichText::new("7").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("8").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("9").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("×").color(Color32::BLACK).size(40.0)).min_size(button_size_square).fill(operation_color));
+            });
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Button::new(RichText::new("4").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("5").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("6").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("–").color(Color32::BLACK).size(40.0)).min_size(button_size_square).fill(operation_color));
+            });
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Button::new(RichText::new("1").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("2").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("3").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("+").color(Color32::BLACK).size(40.0)).min_size(button_size_square).fill(operation_color));
+            });
+
+            ui.horizontal(|ui| {
+                ui.add(egui::Button::new(RichText::new("0").color(Color32::BLACK).size(40.0)).min_size(button_size_rectangle));
+                ui.add(egui::Button::new(RichText::new(",").color(Color32::BLACK).size(40.0)).min_size(button_size_square));
+                ui.add(egui::Button::new(RichText::new("=").color(Color32::BLACK).size(40.0)).min_size(button_size_square).fill(operation_color));
+            });
+
+
+
+            
+
+
+
+
+
+
+       });
+
+
+
+
+
+   }
 }
