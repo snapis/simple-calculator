@@ -1,5 +1,14 @@
-use eframe::egui::{self, Color32, RichText};
+// use eframe::egui::{self, Color32, RichText};
 
+fn main() {
+    fn division(dividend: f64, divisor: f64) -> f64 {
+        dividend / divisor
+    }
+
+    println!("{}", division(3.0, 3.0));
+}
+
+/*
 fn main() {
     let native_options = eframe::NativeOptions::default();
     eframe::run_native(
@@ -138,3 +147,4 @@ impl eframe::App for MyEguiApp {
         });
     }
 }
+*/
