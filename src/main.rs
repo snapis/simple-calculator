@@ -12,6 +12,9 @@ fn main() {
         Box::new(|_| {
             Box::new(MyApp {
                 display_text: "Hello, World!".to_string(),
+                num1: None,
+                num2: None,
+                operation: None
             })
         }),
     );
@@ -60,8 +63,36 @@ fn button(size: i8, sort: ButtonType, name: String) -> eframe::egui::Button {
         })
 }
 
+enum Operation {
+    Divide,
+    Multiply,
+    Minus,
+    Plus,
+    Blank
+}
+
 struct MyApp {
     display_text: String,
+    num1: Option<f64>,
+    num2: Option<f64>,
+    operation: Option<Operation>,
+}
+
+impl MyApp {
+    fn execute(&mut self, value: u8, operation: Operation) {
+
+        // Take value, store it and display it
+
+        match operation {
+            Operation::Blank => todo!(),
+            Operation::Divide => todo!(),
+            Operation::Multiply => todo!(),
+            Operation::Minus => todo!(),
+            Operation::Plus => todo!(),
+        };
+
+
+    }
 }
 
 impl eframe::App for MyApp {
