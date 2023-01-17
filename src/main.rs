@@ -1,3 +1,5 @@
+use std::{ops::Neg, borrow::Borrow};
+
 use eframe::{
     egui,
     epaint::{Color32, Stroke},
@@ -105,12 +107,10 @@ impl MyApp {
             self.ops = Some(operation);
             self.display_text(false);
         } else {
-            
             self.display_text = "Err".to_string();
             self.num = vec![None, None];
             self.ops = None;
             self.result = None;
-
         }
     }
 
@@ -139,11 +139,15 @@ impl MyApp {
                     }
 
                     Operation::Minus => {
-                        self.result = Some(num1 - num2);
+
+                        let mut buffer = String::from("-");
+                        buffer.push_str(&self.num[1].unwrap().to_string());
+                        let buffer:f64 = buffer.parse().expect("Should always be a valid value");
+                        self.result = Some(num1 + buffer);
                     }
 
                     Operation::Plus => {
-                        self.result = Some(num1 - num2);
+                        self.result = Some(num1 + num2);
                     }
                 }
 
