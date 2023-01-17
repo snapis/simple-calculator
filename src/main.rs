@@ -11,10 +11,10 @@ fn main() {
         native_options,
         Box::new(|_| {
             Box::new(MyApp {
-                display_text: "Hello, World!".to_string(),
-                num1: None,
-                num2: None,
-                operation: None
+                display_text: "".to_string(),
+                num: vec![None, None],
+                ops: None,
+                auto_clear: false,
             })
         }),
     );
@@ -22,7 +22,6 @@ fn main() {
 
 fn division(dividend: f64, divisor: f64) -> f64 {
     // handle divisor = 0
-
     dividend / divisor
 }
 
@@ -64,34 +63,85 @@ fn button(size: i8, sort: ButtonType, name: String) -> eframe::egui::Button {
 }
 
 enum Operation {
+    Value(char),
     Divide,
-    Multiply,
-    Minus,
-    Plus,
-    Blank
+    Equal,
 }
 
 struct MyApp {
     display_text: String,
-    num1: Option<f64>,
-    num2: Option<f64>,
-    operation: Option<Operation>,
+    num: Vec<Option<f64>>,
+    ops: Option<Operation>,
+
+    // if true, when value entered overwrite num 0
+    auto_clear: bool,
 }
 
 impl MyApp {
-    fn execute(&mut self, value: u8, operation: Operation) {
-
-        // Take value, store it and display it
-
+    fn input(&mut self, operation: Operation) {
         match operation {
-            Operation::Blank => todo!(),
-            Operation::Divide => todo!(),
-            Operation::Multiply => todo!(),
-            Operation::Minus => todo!(),
-            Operation::Plus => todo!(),
-        };
+            Operation::Value(x) => {
+                let current_num = if let Option::None = self.ops { 0 } else { 1 };
 
+                if let Option::Some(stored_num) = self.num[current_num] {
+                    let mut stored_num = stored_num.to_string();
 
+                    stored_num.push(x);
+
+                    let stored_num: f64 = stored_num.parse().expect("Always a valid integer");
+
+                    self.num[current_num] = Option::Some(stored_num);
+                } else {
+                    self.num[current_num] =
+                        Option::Some(f64::from(x.to_digit(10).expect("It's a integer from 0-9")));
+                }
+
+                if self.auto_clear {
+                    self.display_text = x.to_string();
+                    self.num[current_num] = Option::Some(f64::from(x.to_digit(10).expect("msg")));
+                    self.auto_clear = false;
+                } else {
+                    println!("LOG: {}", self.display_text);
+                    self.display_text.push(x);
+                }
+
+                println!("num1:{:?} and num2: {:?}", self.num[0], self.num[1]);
+                if let Option::None = self.ops {
+                    println!("Ops is None");
+                } else {
+                    println!("Ops is Something");
+                }
+                println!("current num is {}", current_num);
+            }
+            Operation::Divide => {
+                if let Option::None = self.ops {
+                    self.ops = Option::Some(Operation::Divide);
+                    self.display_text.push_str(" ÷ ");
+                } else {
+                    // in case of double operator calling it just resets
+                    self.display_text = "".to_string();
+                    self.num = vec![None, None];
+                    self.ops = None;
+                }
+            }
+            Operation::Equal => {
+                if let Some(Operation::Divide) = self.ops {
+                    let result = division(self.num[0].unwrap(), self.num[1].unwrap());
+                    self.num = vec![Some(result), None];
+                    self.display_text = result.to_string();
+                    self.ops = None;
+                    self.auto_clear = true;
+                }
+            }
+        }
+    }
+
+    fn display_text(num1: Option<f64>, num2: Option<f64>, arg: Operation) {
+        //match arg {
+        //  Operation::Value() => {
+
+        //}
+        //}
     }
 }
 
@@ -179,7 +229,7 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Operation, "÷".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Divide);
                 }
             });
 
@@ -188,21 +238,21 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "7".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('7'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "8".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('8'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "9".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('9'));
                 }
 
                 if ui
@@ -218,21 +268,21 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "4".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('4'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "5".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('5'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "6".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('6'));
                 }
 
                 if ui
@@ -248,21 +298,21 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "1".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('1'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "2".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('2'));
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "3".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('3'));
                 }
 
                 if ui
@@ -278,7 +328,7 @@ impl eframe::App for MyApp {
                     .add(button(2, ButtonType::Button, "0".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Value('0'));
                 }
 
                 if ui
@@ -292,7 +342,7 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Operation, "=".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.input(Operation::Equal);
                 }
             });
         });
