@@ -14,31 +14,10 @@ fn main() {
                 display_text: "".to_string(),
                 num: vec![None, None],
                 ops: None,
-                auto_clear: false,
+                result: None,
             })
         }),
     );
-}
-
-fn division(dividend: f64, divisor: f64) -> f64 {
-    // handle divisor = 0
-    dividend / divisor
-}
-
-fn multiplication(multiplier: f64, multiplicand: f64) -> f64 {
-    multiplier * multiplicand
-}
-
-fn subtraction(minuend: f64, subtrahend: f64) -> f64 {
-    minuend - subtrahend
-}
-
-fn addition(addend_1: f64, addend_2: f64) -> f64 {
-    addend_1 + addend_2
-}
-
-fn to_percent(num: f64) -> f64 {
-    num / 100_f64
 }
 
 enum ButtonType {
@@ -63,8 +42,13 @@ fn button(size: i8, sort: ButtonType, name: String) -> eframe::egui::Button {
 }
 
 enum Operation {
-    Value(char),
     Divide,
+    Multiply,
+    Minus,
+    Plus,
+}
+
+enum Function {
     Equal,
 }
 
@@ -72,76 +56,130 @@ struct MyApp {
     display_text: String,
     num: Vec<Option<f64>>,
     ops: Option<Operation>,
-
-    // if true, when value entered overwrite num 0
-    auto_clear: bool,
+    result: Option<f64>,
 }
 
 impl MyApp {
-    fn input(&mut self, operation: Operation) {
-        match operation {
-            Operation::Value(x) => {
-                let current_num = if let Option::None = self.ops { 0 } else { 1 };
+    fn input(&mut self, value: char) {
+        let index = if let Option::None = self.ops { 0 } else { 1 }; //Based of the logic that if a operator has been specified, it also means which number we're at
 
-                if let Option::Some(stored_num) = self.num[current_num] {
-                    let mut stored_num = stored_num.to_string();
+        if let Option::Some(_) = self.result {
+            self.num[index] = Some(f64::from(
+                value
+                    .to_digit(10)
+                    .expect("Will always be a integer between 0-9"),
+            ));
+            self.result = None;
+            self.display_text(false);
+            return;
+        }
 
-                    stored_num.push(x);
+        if let Option::Some(saved_num) = self.num[index] {
+            // If true, pushes the new number, if not just sets it as equal
 
-                    let stored_num: f64 = stored_num.parse().expect("Always a valid integer");
+            let mut new_number = saved_num.to_string();
+            new_number.push(value);
+            self.num[index] = Some(new_number.parse().expect("Should always be valid f64"));
+        } else {
+            self.num[index] = Some(f64::from(
+                value
+                    .to_digit(10)
+                    .expect("Will always be a integer between 0-9"),
+            ));
+        }
 
-                    self.num[current_num] = Option::Some(stored_num);
-                } else {
-                    self.num[current_num] =
-                        Option::Some(f64::from(x.to_digit(10).expect("It's a integer from 0-9")));
+        self.display_text(false);
+
+        println!("First Value: {}", self.num[0].unwrap_or(0.0));
+        println!("Second Value: {}", self.num[1].unwrap_or(0.0));
+        println!("Result Value: {}", self.result.unwrap_or(0.0));
+        if let Option::Some(_) = self.ops {
+            println!("There is a op: True");
+        } else {
+            println!("There is a op: False");
+        }
+    }
+
+    fn operation(&mut self, operation: Operation) {
+        if let Option::None = self.ops {
+            self.ops = Some(operation);
+            self.display_text(false);
+        } else {
+            
+            self.display_text = "Err".to_string();
+            self.num = vec![None, None];
+            self.ops = None;
+            self.result = None;
+
+        }
+    }
+
+    fn function(&mut self, function: Function) {
+        match function {
+            Function::Equal => {
+                let num1 = self.num[0].unwrap_or_else(|| {
+                    todo!("Handle Error, missing num 1");
+                });
+
+                let num2 = self.num[1].unwrap_or_else(|| {
+                    todo!("Handle Error, missing num 2");
+                });
+
+                match self.ops.as_mut().unwrap() {
+                    Operation::Divide => {
+                        if num2 == 0.0 {
+                            todo!("Make code display Err, maybe...")
+                        }
+
+                        self.result = Some(num1 / num2);
+                    }
+
+                    Operation::Multiply => {
+                        self.result = Some(num1 * num2);
+                    }
+
+                    Operation::Minus => {
+                        self.result = Some(num1 - num2);
+                    }
+
+                    Operation::Plus => {
+                        self.result = Some(num1 - num2);
+                    }
                 }
 
-                if self.auto_clear {
-                    self.display_text = x.to_string();
-                    self.num[current_num] = Option::Some(f64::from(x.to_digit(10).expect("msg")));
-                    self.auto_clear = false;
-                } else {
-                    println!("LOG: {}", self.display_text);
-                    self.display_text.push(x);
-                }
-
-                println!("num1:{:?} and num2: {:?}", self.num[0], self.num[1]);
-                if let Option::None = self.ops {
-                    println!("Ops is None");
-                } else {
-                    println!("Ops is Something");
-                }
-                println!("current num is {}", current_num);
-            }
-            Operation::Divide => {
-                if let Option::None = self.ops {
-                    self.ops = Option::Some(Operation::Divide);
-                    self.display_text.push_str(" ÷ ");
-                } else {
-                    // in case of double operator calling it just resets
-                    self.display_text = "".to_string();
-                    self.num = vec![None, None];
-                    self.ops = None;
-                }
-            }
-            Operation::Equal => {
-                if let Some(Operation::Divide) = self.ops {
-                    let result = division(self.num[0].unwrap(), self.num[1].unwrap());
-                    self.num = vec![Some(result), None];
-                    self.display_text = result.to_string();
-                    self.ops = None;
-                    self.auto_clear = true;
-                }
+                self.display_text(true);
+                self.num[0] = Some(self.result.unwrap());
+                self.num[1] = None;
+                self.ops = None;
             }
         }
     }
 
-    fn display_text(num1: Option<f64>, num2: Option<f64>, arg: Operation) {
-        //match arg {
-        //  Operation::Value() => {
+    fn display_text(&mut self, result: bool) {
+        if result {
+            self.display_text = self.result.unwrap().to_string();
+        } else {
+            let mut string_buf = "".to_string();
 
-        //}
-        //}
+            if let Option::Some(num) = self.num[0] {
+                string_buf.push_str(&num.to_string());
+            }
+
+            if let Option::Some(ops) = &self.ops {
+                match ops {
+                    Operation::Divide => string_buf.push_str(" ÷ "),
+                    Operation::Multiply => string_buf.push_str(" × "),
+                    Operation::Minus => string_buf.push_str(" – "),
+                    Operation::Plus => string_buf.push_str(" + "),
+                }
+            }
+
+            if let Option::Some(num) = self.num[1] {
+                string_buf.push_str(&num.to_string());
+            }
+
+            self.display_text = string_buf;
+        }
     }
 }
 
@@ -214,22 +252,18 @@ impl eframe::App for MyApp {
                 if ui
                     .add(button(2, ButtonType::Button, "C".to_string()))
                     .clicked()
-                {
-                    println!("test");
-                }
+                {}
 
                 if ui
                     .add(button(1, ButtonType::Function, "%".to_string()))
                     .clicked()
-                {
-                    println!("test");
-                }
+                {}
 
                 if ui
                     .add(button(1, ButtonType::Operation, "÷".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Divide);
+                    self.operation(Operation::Divide);
                 }
             });
 
@@ -238,28 +272,28 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "7".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('7'));
+                    self.input('7');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "8".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('8'));
+                    self.input('8');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "9".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('9'));
+                    self.input('9');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Operation, "×".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.operation(Operation::Multiply);
                 }
             });
 
@@ -268,28 +302,28 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "4".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('4'));
+                    self.input('4');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "5".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('5'));
+                    self.input('5');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "6".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('6'));
+                    self.input('6');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Operation, "–".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.operation(Operation::Minus);
                 }
             });
 
@@ -298,28 +332,28 @@ impl eframe::App for MyApp {
                     .add(button(1, ButtonType::Button, "1".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('1'));
+                    self.input('1');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "2".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('2'));
+                    self.input('2');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, "3".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('3'));
+                    self.input('3');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Operation, "+".to_string()))
                     .clicked()
                 {
-                    println!("test");
+                    self.operation(Operation::Plus);
                 }
             });
 
@@ -328,21 +362,19 @@ impl eframe::App for MyApp {
                     .add(button(2, ButtonType::Button, "0".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Value('0'));
+                    self.input('0');
                 }
 
                 if ui
                     .add(button(1, ButtonType::Button, ",".to_string()))
                     .clicked()
-                {
-                    println!("test");
-                }
+                {}
 
                 if ui
                     .add(button(1, ButtonType::Operation, "=".to_string()))
                     .clicked()
                 {
-                    self.input(Operation::Equal);
+                    self.function(Function::Equal);
                 }
             });
         });
