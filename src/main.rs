@@ -1,5 +1,3 @@
-use std::{ops::Neg, borrow::Borrow};
-
 use eframe::{
     egui,
     epaint::{Color32, Stroke},
@@ -12,12 +10,7 @@ fn main() {
         "Snapis's Calculator",
         native_options,
         Box::new(|_| {
-            Box::new(MyApp {
-                display_text: "".to_string(),
-                num: vec![None, None],
-                ops: None,
-                result: None,
-            })
+            Box::new(MyApp::default())
         }),
     );
 }
@@ -52,7 +45,11 @@ enum Operation {
 
 enum Function {
     Equal,
+    Clear,
+    Percent,
+    Comma
 }
+
 
 struct MyApp {
     display_text: String,
@@ -61,11 +58,25 @@ struct MyApp {
     result: Option<f64>,
 }
 
+impl Default for MyApp {
+    fn default() -> Self {
+        MyApp {
+            display_text: "".to_string(),
+            num: vec![None, None],
+            ops: None,
+            result: None,
+        }
+        
+    }
+}
+
 impl MyApp {
+
     fn input(&mut self, value: char) {
         let index = if let Option::None = self.ops { 0 } else { 1 }; //Based of the logic that if a operator has been specified, it also means which number we're at
 
         if let Option::Some(_) = self.result {
+
             self.num[index] = Some(f64::from(
                 value
                     .to_digit(10)
@@ -117,18 +128,28 @@ impl MyApp {
     fn function(&mut self, function: Function) {
         match function {
             Function::Equal => {
-                let num1 = self.num[0].unwrap_or_else(|| {
-                    todo!("Handle Error, missing num 1");
-                });
 
-                let num2 = self.num[1].unwrap_or_else(|| {
-                    todo!("Handle Error, missing num 2");
-                });
+                let num1;
+                let num2;
+                if let Option::Some(num) = self.num[0] {
+                    num1 = num;
+                } else {
+                    return;
+                }
+                
+                if let Option::Some(num) = self.num[1] {
+                    num2 = num
+                } else {
+                    return;
+                }
 
                 match self.ops.as_mut().unwrap() {
                     Operation::Divide => {
                         if num2 == 0.0 {
-                            todo!("Make code display Err, maybe...")
+                            *self = MyApp::default();
+                            self.display_text = "Err".to_string();
+                            
+                            return;
                         }
 
                         self.result = Some(num1 / num2);
@@ -155,6 +176,24 @@ impl MyApp {
                 self.num[0] = Some(self.result.unwrap());
                 self.num[1] = None;
                 self.ops = None;
+            }
+
+            Function::Clear => {
+                *self = MyApp::default();
+            }
+
+            Function::Percent => {
+                let index = if let Option::None = self.ops { 0 } else { 1 };
+
+                if let Option::Some(num) = self.num[index] {
+
+                    self.num[index] = Some(num / 100.0);
+
+                } 
+            }
+
+            Function::Comma => {
+                // Impossible given current way of my design
             }
         }
     }
@@ -256,12 +295,17 @@ impl eframe::App for MyApp {
                 if ui
                     .add(button(2, ButtonType::Button, "C".to_string()))
                     .clicked()
-                {}
+                {
+                    self.function(Function::Clear);
+                }
 
                 if ui
                     .add(button(1, ButtonType::Function, "%".to_string()))
                     .clicked()
-                {}
+                {
+                    self.function(Function::Percent);
+                    self.display_text(false);
+                }
 
                 if ui
                     .add(button(1, ButtonType::Operation, "÷".to_string()))
@@ -372,7 +416,9 @@ impl eframe::App for MyApp {
                 if ui
                     .add(button(1, ButtonType::Button, ",".to_string()))
                     .clicked()
-                {}
+                {
+                    self.function(Function::Comma);
+                }
 
                 if ui
                     .add(button(1, ButtonType::Operation, "=".to_string()))
